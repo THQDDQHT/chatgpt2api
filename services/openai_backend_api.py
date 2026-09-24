@@ -23,7 +23,7 @@ from PIL import Image
 from services.account_service import account_service
 from services.config import config
 from services.proxy_service import proxy_settings
-from utils.helper import UpstreamHTTPError, ensure_ok, iter_sse_payloads, new_uuid, split_image_model
+from utils.helper import UpstreamHTTPError, ensure_ok, is_codex_image_model, iter_sse_payloads, new_uuid, split_image_model
 from utils.log import logger
 from utils.pow import build_legacy_requirements_token, build_proof_token, parse_pow_resources
 from utils.turnstile import solve_turnstile_token
@@ -68,7 +68,6 @@ class ChatRequirements:
 DEFAULT_CLIENT_VERSION = "prod-a194cd50d4416d3c0b47c740f206b12ce60f5887"
 DEFAULT_CLIENT_BUILD_NUMBER = "6708908"
 DEFAULT_POW_SCRIPT = "https://chatgpt.com/backend-api/sentinel/sdk.js"
-CODEX_IMAGE_MODEL = "codex-gpt-image-2"
 CODEX_RESPONSES_MODEL = "gpt-5.5"
 SEARCH_MODEL = "gpt-5-5"
 SEARCH_TIMEOUT_SECS = 300.0
@@ -568,7 +567,7 @@ class OpenAIBackendAPI:
             return "auto", ""
         if base_model == "gpt-image-2":
             upstream_model = config.default_upstream_model_name
-        elif base_model == CODEX_IMAGE_MODEL:
+        elif is_codex_image_model(base_model):
             upstream_model = base_model
         else:
             return "auto", ""
@@ -778,6 +777,7 @@ class OpenAIBackendAPI:
             images: list[str] | None = None,
             size: str | None = None,
             quality: str = "auto",
+            model: str = "gpt-image-2",
     ) -> Iterator[Dict[str, Any]]:
         if not self.access_token:
             raise RuntimeError("access_token is required for codex image endpoints")
@@ -790,7 +790,7 @@ class OpenAIBackendAPI:
             "input": self._codex_image_input(prompt, images or []),
             "tools": [{
                 "type": "image_generation",
-                "model": "gpt-image-2",
+                "model": model,
                 "action": "edit" if images else "generate",
                 "size": str(size or "1024x1024"),
                 "quality": str(quality or "auto"),

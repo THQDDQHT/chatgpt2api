@@ -13,7 +13,7 @@ from services.auth_service import AuthService
 from services.config import config
 from services.openai_backend_api import InvalidAccessTokenError
 from services.storage.json_storage import JSONStorageBackend
-from utils.helper import anonymize_token, split_image_model
+from utils.helper import anonymize_token, codex_image_tool_model, split_image_model
 
 
 class AccountCapabilityTests(unittest.TestCase):
@@ -74,7 +74,14 @@ class AccountCapabilityTests(unittest.TestCase):
         self.assertEqual(split_image_model("team-codex-gpt-image-2"), ("team", "codex-gpt-image-2"))
         self.assertEqual(split_image_model("pro-codex-gpt-image-2"), ("pro", "codex-gpt-image-2"))
         self.assertEqual(split_image_model("plus-gpt-image-2"), (None, None))
+        self.assertEqual(split_image_model("codex-gpt-image-2.5-flare"), (None, "codex-gpt-image-2.5-flare"))
+        self.assertEqual(split_image_model("team-codex-gpt-image-2.5-sunburst"), ("team", "codex-gpt-image-2.5-sunburst"))
         self.assertEqual(split_image_model("unknown-image-model"), (None, None))
+
+    def test_codex_image_tool_model_maps_to_upstream_model(self) -> None:
+        self.assertEqual(codex_image_tool_model("codex-gpt-image-2"), "gpt-image-2")
+        self.assertEqual(codex_image_tool_model("codex-gpt-image-2.5-flare"), "gpt-image-2.5-flare")
+        self.assertEqual(codex_image_tool_model("pro-codex-gpt-image-2.5-sunburst"), "gpt-image-2.5-sunburst")
 
     def test_get_available_access_token_filters_by_plan_type(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

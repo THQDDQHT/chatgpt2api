@@ -18,6 +18,7 @@ from services.openai_backend_api import ImageContentPolicyError, ImagePollTimeou
 from utils.helper import (
     IMAGE_MODELS,
     extract_image_from_message_content,
+    codex_image_tool_model,
     is_codex_image_model,
     is_supported_image_model,
     split_image_model,
@@ -1271,6 +1272,7 @@ def stream_codex_image_outputs(
         images=request.images or [],
         size=request.size,
         quality=request.quality,
+        model=codex_image_tool_model(request.model),
     )))
     if not images:
         raise ImageGenerationError("No image result found in response")
